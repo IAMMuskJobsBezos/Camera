@@ -29,6 +29,13 @@
     <string name="toggle_camera">Toggle front/back camera</string>
     <string name="toggle_flash">Toggle the flashlight mode</string>
     <string name="toggle_timer">Toggle the timer mode</string>
+    <string name="flash_off">Flash OFF</string>
+    <string name="flash_on">Flash ON</string>
+    <string name="timer_off">Timer OFF</string>
+    <string name="timer_3s">3s Timer</string>
+    <string name="timer_10s">10s Timer</string>
+    <string name="flip">Flip</string>
+    <string name="photos">Photos</string>
 
     <!-- FAQ -->
     <string name="faq_1_title">What photo compression quality should I set?</string>

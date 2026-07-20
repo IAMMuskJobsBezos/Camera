@@ -23,14 +23,5 @@ interface CameraXPreviewListener {
     fun onFocusCamera(xPos: Float, yPos: Float)
     fun onTouchPreview()
     fun displaySelectedResolution(resolutionOption: ResolutionOption)
-    fun showImageSizes(
-        selectedResolution: ResolutionOption,
-        resolutions: List<ResolutionOption>,
-        isPhotoCapture: Boolean,
-        isFrontCamera: Boolean,
-        onSelect: (index: Int, changed: Boolean) -> Unit,
-    )
-
-    fun showFlashOptions(photoCapture: Boolean)
     fun adjustPreviewView(requiresCentering: Boolean)
 }

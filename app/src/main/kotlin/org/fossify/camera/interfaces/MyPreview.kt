@@ -17,6 +17,4 @@ interface MyPreview {
     fun initPhotoMode()
 
     fun initVideoMode()
-
-    fun showChangeResolution()
 }

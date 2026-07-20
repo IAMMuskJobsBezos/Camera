@@ -50,7 +50,8 @@ class Config(context: Context) : BaseConfig(context) {
         set(initPhotoMode) = prefs.edit().putBoolean(INIT_PHOTO_MODE, initPhotoMode).apply()
 
     var flashlightState: Int
-        get() = prefs.getInt(FLASHLIGHT_STATE, FLASH_OFF)
+        // any legacy Auto/Always-on value (previously 2 or 3) migrates to Off
+        get() = prefs.getInt(FLASHLIGHT_STATE, FLASH_OFF).takeIf { it == FLASH_ON } ?: FLASH_OFF
         set(state) = prefs.edit().putInt(FLASHLIGHT_STATE, state).apply()
 
     var backPhotoResIndex: Int
@@ -99,8 +100,7 @@ class Config(context: Context) : BaseConfig(context) {
         set(maxBrightness) = prefs.edit().putBoolean(MAX_BRIGHTNESS, maxBrightness).apply()
 
     var timerMode: TimerMode
-        get() = TimerMode.values().getOrNull(prefs.getInt(TIMER_MODE, TimerMode.OFF.ordinal))
-            ?: TimerMode.OFF
-        set(timerMode) = prefs.edit().putInt(TIMER_MODE, timerMode.ordinal).apply()
+        get() = TimerMode.fromPrefValue(prefs.getInt(TIMER_MODE, TimerMode.OFF.prefValue))
+        set(timerMode) = prefs.edit().putInt(TIMER_MODE, timerMode.prefValue).apply()
 
 }

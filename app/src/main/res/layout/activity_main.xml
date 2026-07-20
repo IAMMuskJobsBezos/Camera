@@ -26,6 +26,7 @@
         android:id="@+id/top_options"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/overlay_color"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -33,14 +34,6 @@
         <include
             android:id="@+id/layout_top"
             layout="@layout/layout_top" />
-
-        <include
-            android:id="@+id/layout_flash"
-            layout="@layout/layout_flash" />
-
-        <include
-            android:id="@+id/layout_timer"
-            layout="@layout/layout_timer" />
 
     </FrameLayout>
 
@@ -76,24 +69,24 @@
             android:id="@+id/camera_mode_tab"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/big_margin"
+            android:layout_marginBottom="@dimen/medium_margin"
             android:background="@android:color/transparent"
-            app:tabBackground="@drawable/tab_indicator"
-            app:tabIndicator="@null"
-            app:tabMode="auto"
-            app:tabRippleColor="@null"
-            app:tabSelectedTextColor="@color/md_grey_600_dark"
-            app:tabTextColor="@color/md_grey_white">
+            app:tabGravity="fill"
+            app:tabIndicatorColor="@android:color/white"
+            app:tabIndicatorFullWidth="false"
+            app:tabIndicatorHeight="3dp"
+            app:tabMode="fixed"
+            app:tabRippleColor="@null">
 
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/video" />
+                android:layout="@layout/tab_item_photo" />
 
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/photo" />
+                android:layout="@layout/tab_item_video" />
 
         </com.google.android.material.tabs.TabLayout>
     </RelativeLayout>
@@ -103,8 +96,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="@dimen/smaller_margin"
+        android:layout_marginBottom="@dimen/normal_margin"
         android:textColor="@android:color/white"
+        android:textSize="@dimen/recording_timer_text_size"
+        android:textStyle="bold"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/shutter"
         app:layout_constraintEnd_toEndOf="parent"
@@ -112,25 +107,44 @@
         tools:text="00:00"
         tools:visibility="visible" />
 
-    <ImageView
+    <LinearLayout
         android:id="@+id/last_photo_video_preview"
-        android:layout_width="@dimen/icon_size"
-        android:layout_height="@dimen/icon_size"
-        android:background="@drawable/camera_button_background"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
         android:contentDescription="@string/view_last_media"
-        android:padding="@dimen/tiny_margin"
+        android:focusable="true"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="@id/shutter"
-        app:layout_constraintEnd_toStartOf="@id/shutter"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_chainStyle="spread"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/shutter"
-        tools:src="@tools:sample/backgrounds/scenic" />
+        app:layout_constraintStart_toEndOf="@id/shutter"
+        app:layout_constraintTop_toTopOf="@id/shutter">
+
+        <ImageView
+            android:id="@+id/photos_icon"
+            android:layout_width="@dimen/action_circle_size"
+            android:layout_height="@dimen/action_circle_size"
+            android:background="@drawable/camera_button_background"
+            android:importantForAccessibility="no"
+            android:padding="@dimen/tiny_margin"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_photos_vector" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/tiny_margin"
+            android:text="@string/photos"
+            android:textAppearance="@style/TextAppearance.App.ActionLabel" />
+
+    </LinearLayout>
 
     <ImageView
         android:id="@+id/shutter"
-        android:layout_width="@dimen/large_icon_size"
-        android:layout_height="@dimen/large_icon_size"
-        android:layout_marginBottom="@dimen/big_margin"
+        android:layout_width="@dimen/shutter_size"
+        android:layout_height="@dimen/shutter_size"
         android:contentDescription="@string/shutter"
         android:src="@drawable/ic_shutter_animated"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -138,17 +152,36 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintVertical_bias="1" />
 
-    <ImageView
-        android:id="@+id/toggle_camera"
-        android:layout_width="@dimen/icon_size"
-        android:layout_height="@dimen/icon_size"
-        android:background="@drawable/camera_button_background"
+    <LinearLayout
+        android:id="@+id/flip_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
         android:contentDescription="@string/toggle_camera"
-        android:padding="@dimen/medium_margin"
-        android:src="@drawable/ic_flip_camera_vector"
+        android:focusable="true"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="@id/shutter"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/shutter"
-        app:layout_constraintTop_toTopOf="@id/shutter" />
+        app:layout_constraintEnd_toStartOf="@id/shutter"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/shutter">
+
+        <ImageView
+            android:id="@+id/toggle_camera"
+            android:layout_width="@dimen/action_circle_size"
+            android:layout_height="@dimen/action_circle_size"
+            android:background="@drawable/camera_button_background"
+            android:importantForAccessibility="no"
+            android:padding="@dimen/flip_icon_padding"
+            android:src="@drawable/ic_flip_camera_vector" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/tiny_margin"
+            android:text="@string/flip"
+            android:textAppearance="@style/TextAppearance.App.ActionLabel" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

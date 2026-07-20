@@ -11,3 +11,5 @@ keystore.properties
 fastlane/fastlane.json
 fastlane/report.xml
 .kotlin/
+docs/elderly-spec/wireframes/
+docs/elderly-spec/_progress/

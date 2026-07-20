@@ -6,7 +6,6 @@ import android.hardware.SensorManager
 import android.hardware.display.DisplayManager
 import android.os.Handler
 import android.os.Looper
-import android.util.Rational
 import android.util.Size
 import android.view.Display
 import android.view.GestureDetector
@@ -25,7 +24,6 @@ import androidx.camera.core.ImageCapture.Builder
 import androidx.camera.core.ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
 import androidx.camera.core.ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
 import androidx.camera.core.ImageCapture.ERROR_CAPTURE_FAILED
-import androidx.camera.core.ImageCapture.FLASH_MODE_AUTO
 import androidx.camera.core.ImageCapture.FLASH_MODE_OFF
 import androidx.camera.core.ImageCapture.FLASH_MODE_ON
 import androidx.camera.core.ImageCapture.Metadata
@@ -34,8 +32,6 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.UseCase
-import androidx.camera.core.UseCaseGroup
-import androidx.camera.core.ViewPort
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION
 import androidx.camera.core.resolutionselector.ResolutionSelector.PREFER_HIGHER_RESOLUTION_OVER_CAPTURE_RATE
@@ -59,25 +55,22 @@ import androidx.core.view.doOnLayout
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import androidx.window.layout.WindowMetricsCalculator
 import com.bumptech.glide.load.ImageHeaderParser.UNKNOWN_ORIENTATION
 import org.fossify.camera.R
 import org.fossify.camera.extensions.checkLocationPermission
 import org.fossify.camera.extensions.config
-import org.fossify.camera.extensions.toAppFlashMode
 import org.fossify.camera.extensions.toCameraSelector
 import org.fossify.camera.extensions.toCameraXFlashMode
 import org.fossify.camera.extensions.toCameraXQuality
 import org.fossify.camera.extensions.toLensFacing
 import org.fossify.camera.helpers.BitmapUtils
 import org.fossify.camera.helpers.CameraErrorHandler
-import org.fossify.camera.helpers.FLASH_ALWAYS_ON
+import org.fossify.camera.helpers.FLASH_OFF
 import org.fossify.camera.helpers.FLASH_ON
 import org.fossify.camera.helpers.ImageQualityManager
 import org.fossify.camera.helpers.ImageSaver
 import org.fossify.camera.helpers.ImageUtil
 import org.fossify.camera.helpers.MediaOutputHelper
-import org.fossify.camera.helpers.MediaSizeStore
 import org.fossify.camera.helpers.MediaSoundHelper
 import org.fossify.camera.helpers.PinchToZoomOnScaleGestureListener
 import org.fossify.camera.helpers.SimpleLocationManager
@@ -86,7 +79,6 @@ import org.fossify.camera.interfaces.MyPreview
 import org.fossify.camera.models.CaptureMode
 import org.fossify.camera.models.MediaOutput
 import org.fossify.camera.models.MySize
-import org.fossify.camera.models.ResolutionOption
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.helpers.PERMISSION_ACCESS_FINE_LOCATION
@@ -116,10 +108,8 @@ class CameraXPreview(
     private val mainExecutor = ContextCompat.getMainExecutor(activity)
     private val displayManager =
         activity.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-    private val windowMetricsCalculator = WindowMetricsCalculator.getOrCreate()
     private val videoQualityManager = VideoQualityManager(activity)
     private val imageQualityManager = ImageQualityManager(activity)
-    private val mediaSizeStore = MediaSizeStore(config)
 
     private val orientationEventListener =
         object : OrientationEventListener(activity, SensorManager.SENSOR_DELAY_NORMAL) {
@@ -223,10 +213,11 @@ class CameraXPreview(
             MySize(selectedQuality.width, selectedQuality.height)
         }
 
-        listener.adjustPreviewView(resolution.requiresCentering())
+        // the preview always sits boxed between the fixed top and bottom bars (never edge-to-edge),
+        // so their heights - and the preview's position - never change between photo/video mode
+        listener.adjustPreviewView(true)
+        previewView.scaleType = ScaleType.FILL_CENTER
 
-        val isFullSize = resolution.isFullScreen
-        previewView.scaleType = if (isFullSize) ScaleType.FILL_CENTER else ScaleType.FIT_CENTER
         val rotation = previewView.display.rotation
         val targetResolution = Size(resolution.width, resolution.height)
 
@@ -234,31 +225,12 @@ class CameraXPreview(
         val captureUseCase = getCaptureUseCase(targetResolution, rotation)
 
         cameraProvider.unbindAll()
-        camera = if (isFullSize) {
-            val metrics = windowMetricsCalculator.computeCurrentWindowMetrics(activity).bounds
-            val screenWidth = metrics.width()
-            val screenHeight = metrics.height()
-            val viewPort = ViewPort.Builder(Rational(screenWidth, screenHeight), rotation).build()
-
-            val useCaseGroup = UseCaseGroup.Builder()
-                .addUseCase(previewUseCase)
-                .addUseCase(captureUseCase)
-                .setViewPort(viewPort)
-                .build()
-
-            cameraProvider.bindToLifecycle(
-                activity,
-                cameraSelector,
-                useCaseGroup,
-            )
-        } else {
-            cameraProvider.bindToLifecycle(
-                activity,
-                cameraSelector,
-                previewUseCase,
-                captureUseCase,
-            )
-        }
+        camera = cameraProvider.bindToLifecycle(
+            activity,
+            cameraSelector,
+            previewUseCase,
+            captureUseCase,
+        )
         preview = previewUseCase
         setupZoomAndFocus()
         setFlashlightState(config.flashlightState)
@@ -470,56 +442,6 @@ class CameraXPreview(
         return isPhotoCapture
     }
 
-    override fun showChangeResolution() {
-        val selectedResolution = if (isPhotoCapture) {
-            imageQualityManager.getUserSelectedResolution(cameraSelector).toResolutionOption()
-        } else {
-            videoQualityManager.getUserSelectedQuality(cameraSelector).toResolutionOption()
-        }
-
-        val resolutions = if (isPhotoCapture) {
-            imageQualityManager.getSupportedResolutions(cameraSelector)
-                .map { it.toResolutionOption() }
-        } else {
-            videoQualityManager.getSupportedQualities(cameraSelector)
-                .map { it.toResolutionOption() }
-        }
-
-        if (resolutions.size > 2) {
-            listener.showImageSizes(
-                selectedResolution = selectedResolution,
-                resolutions = resolutions,
-                isPhotoCapture = isPhotoCapture,
-                isFrontCamera = isFrontCameraInUse()
-            ) { index, changed ->
-                mediaSizeStore.storeSize(isPhotoCapture, isFrontCameraInUse(), index)
-                if (changed) {
-                    currentRecording?.stop()
-                    startCamera()
-                }
-            }
-        } else {
-            toggleResolutions(resolutions)
-        }
-    }
-
-    private fun toggleResolutions(resolutions: List<ResolutionOption>) {
-        if (resolutions.size >= 2) {
-            val currentIndex =
-                mediaSizeStore.getCurrentSizeIndex(isPhotoCapture, isFrontCameraInUse())
-
-            val nextIndex = if (currentIndex >= resolutions.lastIndex) {
-                0
-            } else {
-                currentIndex + 1
-            }
-
-            mediaSizeStore.storeSize(isPhotoCapture, isFrontCameraInUse(), nextIndex)
-            currentRecording?.stop()
-            startCamera()
-        }
-    }
-
     override fun toggleFrontBackCamera() {
         val newCameraSelector = if (isFrontCameraInUse()) {
             CameraSelector.DEFAULT_BACK_CAMERA
@@ -533,39 +455,18 @@ class CameraXPreview(
     }
 
     override fun handleFlashlightClick() {
-        if (isPhotoCapture) {
-            listener.showFlashOptions(true)
-        } else {
-            toggleFlashlight()
-        }
+        toggleFlashlight()
     }
 
     private fun toggleFlashlight() {
-        val newFlashMode = if (isPhotoCapture) {
-            when (flashMode) {
-                FLASH_MODE_OFF -> FLASH_MODE_ON
-                FLASH_MODE_ON -> FLASH_MODE_AUTO
-                else -> FLASH_MODE_OFF
-            }
-        } else {
-            when (flashMode) {
-                FLASH_MODE_OFF -> FLASH_MODE_ON
-                else -> FLASH_MODE_OFF
-            }
-        }
-        setFlashlightState(newFlashMode.toAppFlashMode())
+        val newFlashState = if (flashMode == FLASH_MODE_ON) FLASH_OFF else FLASH_ON
+        setFlashlightState(newFlashState)
     }
 
     override fun setFlashlightState(state: Int) {
-        var flashState = state
-        if (isPhotoCapture) {
-            camera?.cameraControl?.enableTorch(flashState == FLASH_ALWAYS_ON)
-        } else {
-            camera?.cameraControl?.enableTorch(flashState == FLASH_ON || flashState == FLASH_ALWAYS_ON)
-            // reset to the FLASH_ON for video capture
-            if (flashState == FLASH_ALWAYS_ON) {
-                flashState = FLASH_ON
-            }
+        val flashState = if (state == FLASH_ON) FLASH_ON else FLASH_OFF
+        if (!isPhotoCapture) {
+            camera?.cameraControl?.enableTorch(flashState == FLASH_ON)
         }
         val newFlashMode = flashState.toCameraXFlashMode()
         flashMode = newFlashMode
