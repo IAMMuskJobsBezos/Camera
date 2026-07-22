@@ -366,7 +366,25 @@ class MainActivity : SimpleActivity(), PhotoProcessor.MediaSavedListener, Camera
         if (mPreviewUri != null) {
             val path =
                 applicationContext.getRealPathFromURI(mPreviewUri!!) ?: mPreviewUri!!.toString()
-            openPathIntent(path, false, BuildConfig.APPLICATION_ID)
+
+            // force Fossify Gallery specifically instead of letting the OS pick/chooser a
+            // different default photo viewer; fall back to the generic behavior if it's missing
+            if (isPackageInstalled("org.fossify.gallery")) {
+                ensureBackgroundThread {
+                    val finalUri = getFinalUriFromPath(path, BuildConfig.APPLICATION_ID) ?: return@ensureBackgroundThread
+                    val mimeType = getUriMimeType(path, finalUri)
+                    Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(finalUri, mimeType)
+                        setPackage("org.fossify.gallery")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        putExtra(IS_FROM_GALLERY, true)
+                        putExtra(REAL_FILE_PATH, path)
+                        launchActivityIntent(this)
+                    }
+                }
+            } else {
+                openPathIntent(path, false, BuildConfig.APPLICATION_ID)
+            }
         }
     }
 
