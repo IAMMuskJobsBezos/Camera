@@ -367,15 +367,26 @@ class MainActivity : SimpleActivity(), PhotoProcessor.MediaSavedListener, Camera
             val path =
                 applicationContext.getRealPathFromURI(mPreviewUri!!) ?: mPreviewUri!!.toString()
 
-            // force Fossify Gallery specifically instead of letting the OS pick/chooser a
-            // different default photo viewer; fall back to the generic behavior if it's missing
-            if (isPackageInstalled("org.fossify.gallery")) {
+            // force Fossify Gallery's own ViewPagerActivity specifically, instead of a generic
+            // ACTION_VIEW that could resolve to a different photo viewer or a chooser.
+            // Match the camera's own applicationIdSuffix (e.g. ".debug") so debug builds of
+            // Camera target the debug build of Gallery instead of missing the package entirely.
+            // setClassName is required (setPackage alone isn't enough): Gallery's PhotoActivity -
+            // a different, non-elderly single-file viewer - also declares ACTION_VIEW+image/*, so
+            // an implicit-within-package match resolves there instead of ViewPagerActivity, which
+            // doesn't honor IS_FROM_GALLERY. The explicit component also needs the <queries> entry
+            // in the manifest for org.fossify.gallery(.debug) - without it, Android's
+            // package-visibility filter silently drops the explicit target and falls back to
+            // PhotoActivity regardless of what component we asked for.
+            val galleryPackage =
+                BuildConfig.APPLICATION_ID.replace("org.fossify.camera", "org.fossify.gallery")
+            if (isPackageInstalled(galleryPackage)) {
                 ensureBackgroundThread {
                     val finalUri = getFinalUriFromPath(path, BuildConfig.APPLICATION_ID) ?: return@ensureBackgroundThread
                     val mimeType = getUriMimeType(path, finalUri)
                     Intent(Intent.ACTION_VIEW).apply {
                         setDataAndType(finalUri, mimeType)
-                        setPackage("org.fossify.gallery")
+                        setClassName(galleryPackage, "org.fossify.gallery.activities.ViewPagerActivity")
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         putExtra(IS_FROM_GALLERY, true)
                         putExtra(REAL_FILE_PATH, path)
