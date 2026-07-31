@@ -117,9 +117,8 @@
         android:gravity="center_horizontal"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="@id/shutter"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_chainStyle="spread"
-        app:layout_constraintStart_toEndOf="@id/shutter"
+        app:layout_constraintEnd_toStartOf="@id/shutter"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/shutter">
 
         <ImageView
@@ -162,8 +161,9 @@
         android:gravity="center_horizontal"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="@id/shutter"
-        app:layout_constraintEnd_toStartOf="@id/shutter"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toEndOf="@id/shutter"
         app:layout_constraintTop_toTopOf="@id/shutter">
 
         <ImageView
