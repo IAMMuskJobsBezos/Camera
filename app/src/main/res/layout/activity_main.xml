@@ -136,7 +136,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/tiny_margin"
             android:text="@string/photos"
-            android:textAppearance="@style/TextAppearance.App.ActionLabel" />
+            android:textAppearance="@style/TextAppearance.App.ActionLabel"
+            android:textColor="@android:color/white" />
 
     </LinearLayout>
 
@@ -180,7 +181,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/tiny_margin"
             android:text="@string/flip"
-            android:textAppearance="@style/TextAppearance.App.ActionLabel" />
+            android:textAppearance="@style/TextAppearance.App.ActionLabel"
+            android:textColor="@android:color/white" />
 
     </LinearLayout>
 

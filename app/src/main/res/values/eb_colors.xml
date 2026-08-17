@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ElderBerry palette, shared across the app suite and the launcher. Colour only: no
+         layout, size or spacing changes hang off these. -->
+
+    <color name="eb_accent">#FF6A3A7E</color>
+    <color name="eb_ink">#FF2A1436</color>
+    <color name="eb_ink_muted">#FF5C4468</color>
+    <color name="eb_canvas">#FFFBF8FC</color>
+    <color name="eb_plum_end">#FF2A1633</color>
+
+</resources>

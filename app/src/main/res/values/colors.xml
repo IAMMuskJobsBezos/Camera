@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="overlay_color">#2e000000</color>
+
+    <!-- ElderBerry palette applied through Fossify Commons' own colour resources. App-module
+         resources win over the AAR's during merging, so every getProperTextColor() /
+         getProperBackgroundColor() / getProperPrimaryColor() call resolves to these, on every
+         screen, without touching a single layout. ElderBerryTheme.kt writes the same values into
+         the stored prefs, which is what existing installs actually read. -->
+
+    <color name="color_primary">@color/eb_accent</color>
+    <color name="color_primary_dark">@color/eb_plum_end</color>
+    <color name="color_accent">@color/eb_accent</color>
+
+    <color name="default_primary_color">@color/eb_accent</color>
+    <color name="default_accent_color">@color/eb_accent</color>
+    <color name="default_background_color">@color/eb_canvas</color>
+    <color name="default_text_color">@color/eb_ink</color>
+
+    <color name="bottom_tabs_light_background">@color/eb_canvas</color>
+
 </resources>

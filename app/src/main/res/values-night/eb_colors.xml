@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="eb_accent">#FFD8BFE8</color>
+    <color name="eb_ink">#FFF6ECFD</color>
+    <color name="eb_ink_muted">#FFC9A3DA</color>
+    <color name="eb_canvas">#FF2A1633</color>
+
+</resources>

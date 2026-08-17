@@ -103,4 +103,8 @@ class Config(context: Context) : BaseConfig(context) {
         get() = TimerMode.fromPrefValue(prefs.getInt(TIMER_MODE, TimerMode.OFF.prefValue))
         set(timerMode) = prefs.edit().putInt(TIMER_MODE, timerMode.prefValue).apply()
 
+    // prefs is protected on BaseConfig, so these live here rather than on ElderBerryTheme itself.
+    fun applyElderBerryTheme() = ElderBerryTheme.apply(context, this, prefs)
+
+    fun revertElderBerryTheme() = ElderBerryTheme.revert(this, prefs)
 }
